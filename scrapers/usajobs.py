@@ -101,6 +101,11 @@ class USAJobsScraper(BaseScraper):
         dept = obj.get("DepartmentName", "")
         agency = f"{dept} / {org}" if dept and org and dept != org else (dept or org)
 
+        # Contact info
+        contact_name = details.get("AgencyContactName", "")
+        contact_phone = details.get("AgencyContactPhone", "")
+        contact_email = details.get("AgencyContactEmail", "")
+
         return JobListing(
             job_site="usajobs.gov",
             full_url=obj.get("PositionURI", ""),
@@ -110,6 +115,9 @@ class USAJobsScraper(BaseScraper):
             qualification=qualifications,
             education_requirement=education,
             full_description=full_description,
+            contact_name=contact_name,
+            contact_phone=contact_phone,
+            contact_email=contact_email,
         )
 
 

@@ -15,6 +15,10 @@ class JobListing:
     qualification: str = ""
     education_requirement: str = ""
     full_description: str = ""
+    # Contact info
+    contact_name: str = ""
+    contact_phone: str = ""
+    contact_email: str = ""
     # These are populated by processing steps, not scrapers
     org_boilerplate: str = ""
     role_description: str = ""

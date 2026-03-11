@@ -20,7 +20,7 @@ from scrapers import ALL_SCRAPERS
 from scrapers.base import JobListing
 from processing.boilerplate import process_boilerplate
 from processing.keywords import process_keywords
-from storage import deduplicate, append_listings
+from storage import merge_listings
 
 
 def setup_logging() -> None:
@@ -60,23 +60,18 @@ def run(source_filter: str | None = None) -> None:
         logger.info("No listings found, exiting")
         return
 
-    # Phase 2: Deduplicate against existing CSV
-    new_listings = deduplicate(all_listings)
-    if not new_listings:
-        logger.info("No new listings after deduplication, exiting")
-        return
-
-    # Phase 3: Process descriptions
+    # Phase 2: Process descriptions
     logger.info("Processing boilerplate detection...")
-    new_listings = process_boilerplate(new_listings)
+    all_listings = process_boilerplate(all_listings)
 
     logger.info("Extracting keywords...")
-    new_listings = process_keywords(new_listings)
+    all_listings = process_keywords(all_listings)
 
-    # Phase 4: Save to CSV
-    written = append_listings(new_listings)
+    # Phase 3: Merge into CSV (dedup, update dates, preserve status)
+    new_count, updated_count = merge_listings(all_listings)
     logger.info(
-        f"=== Done: {written} new listings added to {config.CSV_PATH.name} ==="
+        f"=== Done: {new_count} new, {updated_count} updated "
+        f"in {config.CSV_PATH.name} ==="
     )
 
 
