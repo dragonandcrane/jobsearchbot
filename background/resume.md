@@ -13,20 +13,23 @@ launching a small business; seeking a 100% remote role in software or platform e
 
 ---
 
-## SKILLS
+## TOOLS
 
-| **Languages**     | **Infrastructure**      | **Data**                | **Domains**          |
-|-------------------|-------------------------|-------------------------|----------------------|
-| Golang, Python    | Kubernetes / Helm       | Oracle / SQL            | Finance & Payments   |
-| Java, Kotlin      | AWS / GCP / Azure       | Sybase, DB2             | Healthcare Data      |
-| C / C++           | Docker, Terraform       | MongoDB / NoSQL         | Cloud Management     |
-| React / JS        | Jenkins, Concourse CI   | Elasticsearch, Kafka    | Network Security     |
+**Language**: Python, Java, C++, Kotlin, Golang, JS, SQL\
+**DB/Store**: Neo4j, ElasticSearch, DB2, Oracle RDBMS, MongoDB\
+**Cloud**: AWS, GCP, Azure\
+**Infra**: Terraform, Pulumi, CloudFormation, Ansible, Chef\
+**Framework**: Django, Spring Boot, Rails, React\
+**Compute**: Kubernetes, Docker Swarm, Helm\
+**Messaging**: AWS SQS, ActiveMQ, Kafka\
+**CI/CD**: Jenkins, TeamCity, Concourse, Github Actions\
+**Workflow**: Trello, Asana, Jira, Smartsheet, Monday\
 
 ---
 
 ## EXPERIENCE
 
-### Dragon and Crane Dojo &mdash; Founder & Head Instructor
+### Dragon and Crane Dojo &mdash; Founder/CEO & Sensei
 
 *Los Angeles, CA &nbsp;&bull;&nbsp; 2021–Present*
 
