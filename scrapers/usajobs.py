@@ -43,6 +43,7 @@ class USAJobsScraper(BaseScraper):
             params = {
                 "Keyword": keyword,
                 "RemoteIndicator": "True",
+                "LocationName": "Los Angeles, CA",
                 "ResultsPerPage": RESULTS_PER_PAGE,
                 "Page": page,
             }

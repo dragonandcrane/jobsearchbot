@@ -58,7 +58,7 @@ class IndeedScraper(BaseScraper):
         while start < max_pages * 10:
             params = {
                 "q": keyword,
-                "l": "",  # No location, remote filter below
+                "l": "Los Angeles, CA",
                 "sc": "0kf:attr(DSQF7)jt(fulltime,parttime);",  # Remote filter
                 "start": start,
                 "fromage": "7",  # Last 7 days

@@ -6,7 +6,7 @@ write a simple bot in python that scrapes the web for job openings that meet my 
 
 - DevOps, SWE, SDET, IT, InfoSec, or related
 - public or nonprofit sector
-- 100% remote
+- remote and in Los Angeles, CA
 - full time with flexible hours or part time - i am unavailable between 4-9pm
 - prioritize stability and flexibility over salary and excitement
 

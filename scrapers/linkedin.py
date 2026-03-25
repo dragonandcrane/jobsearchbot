@@ -63,7 +63,7 @@ class LinkedInScraper(BaseScraper):
         while start < max_results:
             params = {
                 "keywords": keyword,
-                "location": "United States",
+                "location": "Los Angeles, California",
                 "f_WT": F_REMOTE,
                 "f_JT": job_type,
                 "f_TPR": F_PAST_WEEK,
