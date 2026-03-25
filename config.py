@@ -15,6 +15,11 @@ DATA_DIR = Path.home() / ".jobsearchbot"
 ORG_CACHE_PATH = DATA_DIR / "org_descriptions.json"
 LOG_PATH = DATA_DIR / "bot.log"
 
+# --- Location Filter ---
+# Only keep listings whose location matches one of these US state abbreviations.
+# Empty list disables filtering (keeps all locations).
+LOCATION_FILTER_STATES: list[str] = ["CA"]
+
 # --- Search Terms ---
 SEARCH_KEYWORDS = [
     "DevOps Engineer",

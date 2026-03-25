@@ -7,6 +7,14 @@ from bs4 import BeautifulSoup
 import config
 from scrapers.base import BaseScraper, JobListing
 
+_US_STATE_ABBREVS = frozenset({
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
+})
+
 BASE_URL = "https://www.governmentjobs.com/careers/home/index"
 SEARCH_URL = "https://www.governmentjobs.com/jobs"
 DELAY_SECONDS = 1.5
@@ -72,6 +80,30 @@ class GovernmentJobsScraper(BaseScraper):
         self.logger.info(f"  keyword '{keyword}': {len(listings)} results")
         return listings
 
+    @staticmethod
+    def _passes_location_filter(location: str) -> bool:
+        """Return True if location is in LOCATION_FILTER_STATES, or if unknown.
+
+        Parses "City, ST" and "City, ST XXXXX" formats.
+        Empty location passes through (may be backfilled later).
+        """
+        if not config.LOCATION_FILTER_STATES:
+            return True
+        if not location:
+            return True
+        allowed = {s.upper() for s in config.LOCATION_FILTER_STATES}
+        if "," in location:
+            # "Sacramento, CA" or "Sacramento, CA 95814" -> "CA"
+            state_word = location.rsplit(",", 1)[1].strip().split()[0].upper()
+            return state_word in allowed
+        # No comma: only block if we can positively identify a non-allowed US state.
+        # "Remote" alone has no state info and should pass through.
+        words = {w.upper().rstrip(".,;") for w in location.split()}
+        state_words = words & _US_STATE_ABBREVS
+        if not state_words:
+            return True  # No recognisable state; can't filter
+        return bool(state_words & allowed)
+
     def _parse_card(self, card) -> JobListing | None:
         # Title and link - use the specific class from the actual site
         link_el = card.select_one("a.job-details-link")
@@ -99,6 +131,9 @@ class GovernmentJobsScraper(BaseScraper):
 
         location_el = card.select_one(".job-location")
         location = location_el.get_text(strip=True) if location_el else ""
+
+        if not self._passes_location_filter(location):
+            return None
 
         return JobListing(
             job_site="governmentjobs.com",
