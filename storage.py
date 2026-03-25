@@ -1,4 +1,4 @@
-"""CSV storage: read existing listings, deduplicate, append new ones.
+"""CSV storage: read existing listings, deduplicate, append new ones, backfill gaps.
 
 On re-scrape of an existing URL, updates last_scraped_date (and last_modified_date
 if the description changed). Never overwrites the status column.
@@ -6,9 +6,11 @@ if the description changed). Never overwrites the status column.
 
 import csv
 import logging
+import time
 from collections import OrderedDict
 from datetime import date
 from pathlib import Path
+from typing import Callable
 
 import config
 from scrapers.base import JobListing
@@ -19,6 +21,7 @@ CSV_COLUMNS = [
     "status",
     "job_site",
     "full_url",
+    "location",
     "agency_department",
     "position",
     "salary_range",
@@ -83,6 +86,7 @@ def _listing_to_dict(listing: JobListing) -> dict:
         "status": "",  # Initially blank, never override
         "job_site": listing.job_site,
         "full_url": listing.full_url,
+        "location": listing.location,
         "agency_department": listing.agency_department,
         "position": listing.position,
         "salary_range": listing.salary_range,
@@ -148,7 +152,7 @@ def merge_listings(listings: list[JobListing]) -> tuple[int, int]:
             if _content_changed(existing, new_row):
                 existing["last_modified_date"] = today
                 # Update content fields but preserve status
-                for field in ["position", "salary_range", "qualification",
+                for field in ["location", "position", "salary_range", "qualification",
                               "education_requirement", "org_boilerplate",
                               "role_description", "keywords_swe",
                               "keywords_general", "keywords_domain",
@@ -166,3 +170,50 @@ def merge_listings(listings: list[JobListing]) -> tuple[int, int]:
         f"{len(rows)} total"
     )
     return new_count, updated_count
+
+
+def backfill_missing_fields(
+    fetch_fn: Callable[[str], tuple[str, str]],
+    job_site: str,
+    delay: float = 0.5,
+) -> int:
+    """Fill empty `location` and `remote` cells for rows from `job_site`.
+
+    Calls fetch_fn(url) -> (location, remote) for each row that is missing
+    either field.  Skips rows that already have both.  Returns the count of
+    rows updated.
+    """
+    rows = _load_csv()
+    updated = 0
+
+    for url, row in rows.items():
+        if row.get("job_site", "") != job_site:
+            continue
+        missing_location = not row.get("location", "").strip()
+        missing_remote = not row.get("remote", "").strip()
+        if not missing_location and not missing_remote:
+            continue
+
+        location, remote = fetch_fn(url)
+
+        changed = False
+        if location and missing_location:
+            row["location"] = location
+            changed = True
+        if remote and missing_remote:
+            row["remote"] = remote
+            changed = True
+
+        if changed:
+            updated += 1
+            logger.info(
+                f"  backfill {url}: location={row['location']!r} "
+                f"remote={row['remote']!r}"
+            )
+
+        time.sleep(delay)
+
+    if updated:
+        _save_csv(rows)
+    logger.info(f"Backfill complete: {updated} rows updated")
+    return updated

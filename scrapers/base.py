@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 class JobListing:
     job_site: str = ""
     full_url: str = ""
+    location: str = ""
     agency_department: str = ""
     position: str = ""
     salary_range: str = ""

@@ -18,7 +18,9 @@ git clone https://github.com/dragonandcrane/jobsearchbot.git
 
 ## Usage
 
+```sh
 python main.py
+```
 
 ## store fields
 
@@ -49,6 +51,9 @@ python main.py
 ## Scheduling
 
 the search should run automatically daily at 9am and 6pm
+
+since `main.py` will be rerun repeatedly it should be idempotent.
+This also means after updating the script to add or enrich columns, it can just be rerun.
 
 ## Output
 

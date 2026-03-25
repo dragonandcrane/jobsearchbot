@@ -97,9 +97,13 @@ class GovernmentJobsScraper(BaseScraper):
                 salary = text
                 break
 
+        location_el = card.select_one(".job-location")
+        location = location_el.get_text(strip=True) if location_el else ""
+
         return JobListing(
             job_site="governmentjobs.com",
             full_url=href,
+            location=location,
             agency_department=agency,
             position=title,
             salary_range=salary,
@@ -141,6 +145,12 @@ class GovernmentJobsScraper(BaseScraper):
         if edu_el:
             listing.education_requirement = edu_el.get_text(separator="\n").strip()
 
+        # Location
+        if not listing.location:
+            loc_el = soup.select_one(".job-location")
+            if loc_el:
+                listing.location = loc_el.get_text(strip=True)
+
         # Salary (more detailed on detail page)
         if not listing.salary_range:
             salary_el = soup.select_one("[class*='salary'], [class*='pay']")
@@ -149,6 +159,36 @@ class GovernmentJobsScraper(BaseScraper):
 
         time.sleep(DELAY_SECONDS)
         return listing
+
+
+def fetch_location_remote(url: str) -> tuple[str, str]:
+    """Fetch a governmentjobs.com detail page and return (location, remote).
+
+    Returns empty strings on any error or if the fields are not found.
+    """
+    try:
+        resp = httpx.get(url, headers=HEADERS, timeout=30, follow_redirects=True)
+        resp.raise_for_status()
+    except httpx.HTTPError:
+        return "", ""
+
+    soup = BeautifulSoup(resp.text, "lxml")
+    location = ""
+    remote = ""
+
+    for item in soup.select("div.job-detail-item"):
+        label_el = item.select_one("span.job-detail-label")
+        value_el = item.select_one("span.job-detail-value")
+        if not label_el or not value_el:
+            continue
+        label = label_el.get_text(strip=True).lower()
+        value = value_el.get_text(strip=True)
+        if "location" in label and not location:
+            location = value
+        elif "remote" in label and not remote:
+            remote = value
+
+    return location, remote
 
 
 if __name__ == "__main__":

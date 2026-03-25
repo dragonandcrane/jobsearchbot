@@ -18,9 +18,10 @@ from pathlib import Path
 import config
 from scrapers import ALL_SCRAPERS
 from scrapers.base import JobListing
+from scrapers.governmentjobs import fetch_location_remote
 from processing.boilerplate import process_boilerplate
 from processing.keywords import process_keywords
-from storage import merge_listings
+from storage import backfill_missing_fields, merge_listings
 
 
 def setup_logging() -> None:
@@ -56,23 +57,30 @@ def run(source_filter: str | None = None) -> None:
         f"({', '.join(f'{k}: {v}' for k, v in counts.items())})"
     )
 
-    if not all_listings:
-        logger.info("No listings found, exiting")
-        return
+    if all_listings:
+        # Phase 2: Process descriptions
+        logger.info("Processing boilerplate detection...")
+        all_listings = process_boilerplate(all_listings)
 
-    # Phase 2: Process descriptions
-    logger.info("Processing boilerplate detection...")
-    all_listings = process_boilerplate(all_listings)
+        logger.info("Extracting keywords...")
+        all_listings = process_keywords(all_listings)
 
-    logger.info("Extracting keywords...")
-    all_listings = process_keywords(all_listings)
+        # Phase 3: Merge into CSV (dedup, update dates, preserve status)
+        new_count, updated_count = merge_listings(all_listings)
+        logger.info(
+            f"Merge complete: {new_count} new, {updated_count} updated "
+            f"in {config.CSV_PATH.name}"
+        )
+    else:
+        logger.info("No new listings found")
 
-    # Phase 3: Merge into CSV (dedup, update dates, preserve status)
-    new_count, updated_count = merge_listings(all_listings)
-    logger.info(
-        f"=== Done: {new_count} new, {updated_count} updated "
-        f"in {config.CSV_PATH.name} ==="
-    )
+    # Phase 4: Backfill missing location/remote for governmentjobs rows
+    # Runs unconditionally so re-runs fill gaps even when scrape yields nothing new.
+    if not source_filter or source_filter == "governmentjobs":
+        logger.info("Backfilling missing location/remote fields...")
+        backfill_missing_fields(fetch_location_remote, "governmentjobs.com")
+
+    logger.info("=== Done ===")
 
 
 def main() -> None:

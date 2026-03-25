@@ -9,10 +9,8 @@ USAJOBS_API_KEY = os.getenv("USAJOBS_API_KEY", "")
 USAJOBS_EMAIL = os.getenv("USAJOBS_EMAIL", "")
 
 # --- Paths ---
-CSV_PATH = Path(
-    "/mnt/c/Users/drago/OneDrive - Los Angeles Community College District"
-    "/Personal/career/job search 2026/listings.csv"
-)
+_REPO_ROOT = Path(__file__).parent
+CSV_PATH = _REPO_ROOT / "listings" / "listings.csv"
 DATA_DIR = Path.home() / ".jobsearchbot"
 ORG_CACHE_PATH = DATA_DIR / "org_descriptions.json"
 LOG_PATH = DATA_DIR / "bot.log"
