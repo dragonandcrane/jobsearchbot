@@ -55,7 +55,31 @@ the search should run automatically daily at 9am and 6pm
 since `main.py` will be rerun repeatedly it should be idempotent.
 This also means after updating the script to add or enrich columns, it can just be rerun.
 
-## Output
+## Listings Summary
 
-the output of the search should update a CSV file stored on my OneDrive to ensure sync across my devices:
-C:\Users\drago\OneDrive - Los Angeles Community College District\Personal\career\job search 2026\listings.csv
+The summary output of the search should update a CSV file:
+listings\listings.csv
+
+## Listing Details
+
+For each listing, create a slug based on the url.
+Create a dir based on the slug under the corresponding listings source dir.
+
+Model after below example created by hand:
+
+src: <https://www.governmentjobs.com/jobs/60587-1/cloud-engineer>
+dst:
+
+```text
+/listings
+    /governmentjobs.com
+        /listings/governmentjobs.com/60587-1-cloud-engineer
+            listing.md
+```
+
+The `listing.md` file should contain the listing text with markdown formatting, focusing on headers and bullets.
+
+Since each listing is formatted differently, use simple heuristics eg:
+
+- infer bullet lists from series of short sentence fragments even if source text does not use bullets
+- infer section header from caps, bold, and/or line preceding bullets

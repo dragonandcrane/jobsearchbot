@@ -67,3 +67,12 @@ Working alongside key vendors (Microsoft, VMware, Etc.) to drive the development
 - Build automated processes using well-known languages and frameworks such as PowerShell, CLI, python, YML, JSON, Terraform, Azure Templates
 - Demonstrate experience leading or developing high quality, enterprise scale IT system or Software projects.
 - Hardworking, result oriented with outstanding problem-solving skills
+
+---
+
+**Employer**
+State Bar of California
+
+**Address**
+845 South Figueroa Street
+Los Angeles, California, 90017

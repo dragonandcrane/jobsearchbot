@@ -21,6 +21,7 @@ from scrapers.base import JobListing
 from scrapers.governmentjobs import fetch_location_remote
 from processing.boilerplate import process_boilerplate
 from processing.keywords import process_keywords
+from listing_files import write_listing_file
 from storage import backfill_missing_fields, merge_listings
 
 
@@ -65,7 +66,11 @@ def run(source_filter: str | None = None) -> None:
         logger.info("Extracting keywords...")
         all_listings = process_keywords(all_listings)
 
-        # Phase 3: Merge into CSV (dedup, update dates, preserve status)
+        # Phase 3: Write per-listing detail files (idempotent)
+        written = sum(1 for l in all_listings if write_listing_file(l) is not None)
+        logger.info(f"Listing files: {written} written")
+
+        # Phase 4: Merge into CSV (dedup, update dates, preserve status)
         new_count, updated_count = merge_listings(all_listings)
         logger.info(
             f"Merge complete: {new_count} new, {updated_count} updated "
@@ -74,7 +79,7 @@ def run(source_filter: str | None = None) -> None:
     else:
         logger.info("No new listings found")
 
-    # Phase 4: Backfill missing location/remote for governmentjobs rows
+    # Phase 5: Backfill missing location/remote for governmentjobs rows
     # Runs unconditionally so re-runs fill gaps even when scrape yields nothing new.
     if not source_filter or source_filter == "governmentjobs":
         logger.info("Backfilling missing location/remote fields...")
