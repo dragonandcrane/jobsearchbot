@@ -10,6 +10,16 @@ write a simple bot in python that scrapes the web for job openings that meet my 
 - full time with flexible hours or part time - i am unavailable between 4-9pm
 - prioritize stability and flexibility over salary and excitement
 
+## Install
+
+```sh
+git clone https://github.com/dragonandcrane/jobsearchbot.git
+```
+
+## Usage
+
+python main.py
+
 ## store fields
 
 - status (initially blank, never override)
