@@ -12,6 +12,14 @@ from datetime import date
 from pathlib import Path
 from typing import Callable
 
+_US_STATE_ABBREVS = frozenset({
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
+})
+
 import config
 from scrapers.base import JobListing
 
@@ -22,6 +30,10 @@ CSV_COLUMNS = [
     "job_site",
     "full_url",
     "location",
+    "remote",
+    "job_type",
+    "department",
+    "closing_date",
     "agency_department",
     "position",
     "salary_range",
@@ -87,6 +99,10 @@ def _listing_to_dict(listing: JobListing) -> dict:
         "job_site": listing.job_site,
         "full_url": listing.full_url,
         "location": listing.location,
+        "remote": listing.remote,
+        "job_type": listing.job_type,
+        "department": listing.department,
+        "closing_date": listing.closing_date,
         "agency_department": listing.agency_department,
         "position": listing.position,
         "salary_range": listing.salary_range,
@@ -172,48 +188,124 @@ def merge_listings(listings: list[JobListing]) -> tuple[int, int]:
     return new_count, updated_count
 
 
+_BACKFILL_CSV_FIELDS = ["location", "remote", "job_type", "department", "closing_date"]
+
+
 def backfill_missing_fields(
-    fetch_fn: Callable[[str], tuple[str, str]],
+    fetch_fn: Callable[[str], dict[str, str]],
     job_site: str,
     delay: float = 0.5,
+    limit: int | None = None,
 ) -> int:
-    """Fill empty `location` and `remote` cells for rows from `job_site`.
+    """Fill empty detail fields for rows from `job_site`.
 
-    Calls fetch_fn(url) -> (location, remote) for each row that is missing
-    either field.  Skips rows that already have both.  Returns the count of
-    rows updated.
+    Calls fetch_fn(url) -> dict for each row missing any of: location, remote,
+    job_type, department, closing_date.  Also rebuilds the listing.md file when
+    full_description is returned.  Returns the count of rows updated.
+
+    limit: if set, stop after processing this many rows.
     """
+    from listing_files import listing_has_description, write_listing_file  # avoid circular import
+
     rows = _load_csv()
     updated = 0
+    processed = 0
 
     for url, row in rows.items():
+        if limit is not None and processed >= limit:
+            break
         if row.get("job_site", "") != job_site:
             continue
-        missing_location = not row.get("location", "").strip()
-        missing_remote = not row.get("remote", "").strip()
-        if not missing_location and not missing_remote:
-            continue
 
-        location, remote = fetch_fn(url)
+        csv_complete = all(row.get(f, "").strip() for f in _BACKFILL_CSV_FIELDS)
+        file_has_desc = listing_has_description(url, job_site)
+        if csv_complete and file_has_desc:
+            continue  # nothing to do
+
+        processed += 1
+        fetched = fetch_fn(url)
 
         changed = False
-        if location and missing_location:
-            row["location"] = location
-            changed = True
-        if remote and missing_remote:
-            row["remote"] = remote
-            changed = True
+        if not csv_complete:
+            for field in _BACKFILL_CSV_FIELDS:
+                if fetched.get(field) and not row.get(field, "").strip():
+                    row[field] = fetched[field]
+                    changed = True
 
         if changed:
             updated += 1
             logger.info(
-                f"  backfill {url}: location={row['location']!r} "
-                f"remote={row['remote']!r}"
+                f"  backfill {url}: "
+                + ", ".join(f"{f}={row[f]!r}" for f in _BACKFILL_CSV_FIELDS if row.get(f))
             )
+
+        # Rebuild listing file whenever we fetched data and the file needs a description
+        if not file_has_desc:
+            listing = JobListing(
+                job_site=row.get("job_site", ""),
+                full_url=url,
+                position=row.get("position", ""),
+                agency_department=row.get("agency_department", ""),
+                salary_range=row.get("salary_range", ""),
+                location=row.get("location", ""),
+                remote=row.get("remote", ""),
+                job_type=row.get("job_type", ""),
+                department=row.get("department", ""),
+                closing_date=row.get("closing_date", ""),
+                full_description=fetched.get("full_description", ""),
+                education_requirement=row.get("education_requirement", ""),
+                contact_name=row.get("contact_name", ""),
+                contact_phone=row.get("contact_phone", ""),
+                contact_email=row.get("contact_email", ""),
+            )
+            write_listing_file(listing, force=True)
 
         time.sleep(delay)
 
     if updated:
         _save_csv(rows)
-    logger.info(f"Backfill complete: {updated} rows updated")
+    logger.info(f"Backfill complete: {updated} updated, {processed} fetched")
     return updated
+
+
+def _location_passes_state_filter(location: str, allowed: frozenset[str]) -> bool:
+    """Return True if the location's state is in `allowed`, or if it can't be determined."""
+    if not location:
+        return True
+    if "," in location:
+        state_word = location.rsplit(",", 1)[1].strip().split()[0].upper().rstrip(".,;")
+        return state_word not in _US_STATE_ABBREVS or state_word in allowed
+    words = {w.upper().rstrip(".,;") for w in location.split()}
+    state_words = words & _US_STATE_ABBREVS
+    if not state_words:
+        return True
+    return bool(state_words & allowed)
+
+
+def purge_by_location(allowed_states: list[str], job_site: str | None = None) -> int:
+    """Remove rows whose location resolves to a state not in `allowed_states`.
+
+    Rows with an empty location are left alone (location may still be unknown).
+    If `job_site` is given, only rows from that site are checked.
+    Returns the number of rows removed.
+    """
+    if not allowed_states:
+        return 0
+
+    allowed = frozenset(s.upper() for s in allowed_states)
+    rows = _load_csv()
+    before = len(rows)
+    to_delete = [
+        url for url, row in rows.items()
+        if (job_site is None or row.get("job_site", "") == job_site)
+        and not _location_passes_state_filter(row.get("location", ""), allowed)
+    ]
+    for url in to_delete:
+        logger.info(f"  purge (location filter): {rows[url].get('location')!r} — {url}")
+        del rows[url]
+
+    if to_delete:
+        _save_csv(rows)
+    removed = before - len(rows)
+    logger.info(f"Location purge complete: {removed} rows removed")
+    return removed

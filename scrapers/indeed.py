@@ -33,7 +33,7 @@ HEADERS = {
 class IndeedScraper(BaseScraper):
     name = "indeed"
 
-    def scrape(self) -> list[JobListing]:
+    def scrape(self, limit: int | None = None) -> list[JobListing]:
         all_listings: list[JobListing] = []
         # Use a few broad keywords to avoid rate-limiting with too many queries
         broad_keywords = [

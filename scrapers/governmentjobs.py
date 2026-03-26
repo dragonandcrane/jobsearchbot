@@ -33,19 +33,24 @@ HEADERS = {
 class GovernmentJobsScraper(BaseScraper):
     name = "governmentjobs"
 
-    def scrape(self) -> list[JobListing]:
+    def scrape(self, limit: int | None = None) -> list[JobListing]:
         all_listings: list[JobListing] = []
         for keyword in config.SEARCH_KEYWORDS:
-            listings = self._search_keyword(keyword)
+            if limit is not None and len(all_listings) >= limit:
+                break
+            remaining = (limit - len(all_listings)) if limit is not None else None
+            listings = self._search_keyword(keyword, limit=remaining)
             all_listings.extend(listings)
             time.sleep(DELAY_SECONDS)
         return all_listings
 
-    def _search_keyword(self, keyword: str) -> list[JobListing]:
+    def _search_keyword(self, keyword: str, limit: int | None = None) -> list[JobListing]:
         listings: list[JobListing] = []
         page = 1
         max_pages = 5
         while page <= max_pages:
+            if limit is not None and len(listings) >= limit:
+                break
             params = {
                 "keyword": keyword,
                 "isRemote": "true",
@@ -67,6 +72,8 @@ class GovernmentJobsScraper(BaseScraper):
                 break
 
             for card in job_cards:
+                if limit is not None and len(listings) >= limit:
+                    break
                 listing = self._parse_card(card)
                 if listing:
                     listings.append(listing)
@@ -196,34 +203,78 @@ class GovernmentJobsScraper(BaseScraper):
         return listing
 
 
-def fetch_location_remote(url: str) -> tuple[str, str]:
-    """Fetch a governmentjobs.com detail page and return (location, remote).
+def fetch_location_remote(url: str) -> dict[str, str]:
+    """Fetch a governmentjobs.com detail page and return all metadata fields.
 
-    Returns empty strings on any error or if the fields are not found.
+    Returns a dict with keys: location, remote, job_type, department,
+    closing_date, full_description.  All values default to empty string.
     """
+    result: dict[str, str] = {
+        "location": "",
+        "remote": "",
+        "job_type": "",
+        "department": "",
+        "closing_date": "",
+        "full_description": "",
+    }
     try:
         resp = httpx.get(url, headers=HEADERS, timeout=30, follow_redirects=True)
         resp.raise_for_status()
     except httpx.HTTPError:
-        return "", ""
+        return result
 
     soup = BeautifulSoup(resp.text, "lxml")
-    location = ""
-    remote = ""
 
-    for item in soup.select("div.job-detail-item"):
-        label_el = item.select_one("span.job-detail-label")
-        value_el = item.select_one("span.job-detail-value")
-        if not label_el or not value_el:
+    # Detail fields: current page format uses div.term-block with .term-title / .term-description
+    for block in soup.select("div.term-block"):
+        title_el = block.select_one(".term-title, dt")
+        value_el = block.select_one(".term-description, dd")
+        if not title_el or not value_el:
             continue
-        label = label_el.get_text(strip=True).lower()
+        label = title_el.get_text(strip=True).lower()
         value = value_el.get_text(strip=True)
-        if "location" in label and not location:
-            location = value
-        elif "remote" in label and not remote:
-            remote = value
+        if not value:
+            continue
+        if "location" in label and not result["location"]:
+            result["location"] = value
+        elif "remote" in label and not result["remote"]:
+            result["remote"] = value
+        elif "job type" in label and not result["job_type"]:
+            result["job_type"] = value
+        elif "department" in label and not result["department"]:
+            result["department"] = value
+        elif ("closing" in label or "deadline" in label) and not result["closing_date"]:
+            result["closing_date"] = value
 
-    return location, remote
+    # Fallback: older span.job-detail-label / span.job-detail-value format
+    if not any(result[f] for f in ["job_type", "department", "closing_date"]):
+        for item in soup.select("div.job-detail-item"):
+            label_el = item.select_one("span.job-detail-label")
+            value_el = item.select_one("span.job-detail-value")
+            if not label_el or not value_el:
+                continue
+            label = label_el.get_text(strip=True).lower()
+            value = value_el.get_text(strip=True)
+            if "location" in label and not result["location"]:
+                result["location"] = value
+            elif "remote" in label and not result["remote"]:
+                result["remote"] = value
+            elif "job type" in label and not result["job_type"]:
+                result["job_type"] = value
+            elif "department" in label and not result["department"]:
+                result["department"] = value
+            elif ("closing" in label or "deadline" in label) and not result["closing_date"]:
+                result["closing_date"] = value
+
+    # Description body: active tab pane (#details-info)
+    desc_el = soup.select_one("#details-info")
+    if not desc_el:
+        # Fallback for older page layouts
+        desc_el = soup.select_one(".tab-pane.active, #TextContent")
+    if desc_el:
+        result["full_description"] = desc_el.get_text(separator="\n").strip()
+
+    return result
 
 
 if __name__ == "__main__":

@@ -37,7 +37,7 @@ F_PAST_WEEK = "r604800"  # Last 7 days
 class LinkedInScraper(BaseScraper):
     name = "linkedin"
 
-    def scrape(self) -> list[JobListing]:
+    def scrape(self, limit: int | None = None) -> list[JobListing]:
         all_listings: list[JobListing] = []
         broad_keywords = [
             "DevOps Engineer government",

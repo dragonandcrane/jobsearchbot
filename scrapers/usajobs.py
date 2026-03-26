@@ -19,7 +19,7 @@ def _strip_html(text: str) -> str:
 class USAJobsScraper(BaseScraper):
     name = "usajobs"
 
-    def scrape(self) -> list[JobListing]:
+    def scrape(self, limit: int | None = None) -> list[JobListing]:
         if not config.USAJOBS_API_KEY or not config.USAJOBS_EMAIL:
             self.logger.warning("USAJobs API key or email not set, skipping")
             return []

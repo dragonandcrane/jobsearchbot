@@ -107,6 +107,10 @@ def _build_markdown(listing: JobListing) -> str:
         ("Employer", listing.agency_department),
         ("Salary", listing.salary_range),
         ("Location", listing.location),
+        ("Job Type", listing.job_type),
+        ("Remote Employment", listing.remote),
+        ("Department", listing.department),
+        ("Closing Date", listing.closing_date),
         ("Education", listing.education_requirement),
         ("Contact", listing.contact_name),
         ("Phone", listing.contact_phone),
@@ -114,10 +118,11 @@ def _build_markdown(listing: JobListing) -> str:
     ]
     filled = [(k, v) for k, v in table_rows if v]
     if filled:
-        lines.append("| Field | Value |")
-        lines.append("|-------|-------|")
+        key_width = max(len(k) for k, _ in filled)
+        lines.append(f"| {'Field':<{key_width}} | Value |")
+        lines.append(f"|{'-' * (key_width + 2)}|-------|")
         for k, v in filled:
-            lines.append(f"| {k} | {v} |")
+            lines.append(f"| {k:<{key_width}} | {v} |")
         lines.append("")
 
     lines.append("---")
@@ -144,10 +149,23 @@ def _build_markdown(listing: JobListing) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
-def write_listing_file(listing: JobListing) -> Path | None:
+def listing_has_description(url: str, job_site: str) -> bool:
+    """Return True if the listing.md file has content after the --- separator."""
+    slug = url_to_slug(url)
+    if not slug:
+        return True  # can't determine; don't trigger unnecessary fetches
+    listing_path = _LISTINGS_DIR / job_site / slug / "listing.md"
+    if not listing_path.exists():
+        return False
+    content = listing_path.read_text(encoding="utf-8")
+    sep_idx = content.rfind("---")
+    return sep_idx != -1 and content[sep_idx + 3:].strip() != ""
+
+
+def write_listing_file(listing: JobListing, force: bool = False) -> Path | None:
     """Write listings/<job_site>/<slug>/listing.md for a listing.
 
-    Skips silently if the file already exists (idempotent).
+    Skips silently if the file already exists, unless force=True.
     Returns the Path written, or None if skipped or on error.
     """
     if not listing.full_url:
@@ -162,7 +180,7 @@ def write_listing_file(listing: JobListing) -> Path | None:
     listing_dir = _LISTINGS_DIR / site / slug
     listing_path = listing_dir / "listing.md"
 
-    if listing_path.exists():
+    if listing_path.exists() and not force:
         return None
 
     try:

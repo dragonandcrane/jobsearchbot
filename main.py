@@ -37,7 +37,7 @@ def setup_logging() -> None:
     )
 
 
-def run(source_filter: str | None = None) -> None:
+def run(source_filter: str | None = None, limit: int | None = None) -> None:
     logger = logging.getLogger("main")
     logger.info("=== Job Search Bot starting ===")
 
@@ -46,12 +46,18 @@ def run(source_filter: str | None = None) -> None:
     counts: dict[str, int] = {}
 
     for scraper_cls in ALL_SCRAPERS:
+        if limit is not None and len(all_listings) >= limit:
+            break
         scraper = scraper_cls()
         if source_filter and scraper.name != source_filter:
             continue
-        results = scraper.safe_scrape()
+        remaining = (limit - len(all_listings)) if limit is not None else None
+        results = scraper.safe_scrape(limit=remaining)
         counts[scraper.name] = len(results)
         all_listings.extend(results)
+
+    if limit is not None:
+        logger.info(f"Limit applied: {len(all_listings)} listings")
 
     logger.info(
         f"Scraping complete: {len(all_listings)} total listings "
@@ -83,7 +89,7 @@ def run(source_filter: str | None = None) -> None:
     # Runs unconditionally so re-runs fill gaps even when scrape yields nothing new.
     if not source_filter or source_filter == "governmentjobs":
         logger.info("Backfilling missing location/remote fields...")
-        backfill_missing_fields(fetch_location_remote, "governmentjobs.com")
+        backfill_missing_fields(fetch_location_remote, "governmentjobs.com", limit=limit)
 
     logger.info("=== Done ===")
 
@@ -95,10 +101,16 @@ def main() -> None:
         choices=["usajobs", "governmentjobs", "indeed", "linkedin"],
         help="Only run a specific scraper",
     )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        metavar="N",
+        help="Process at most N listings (for rapid iteration)",
+    )
     args = parser.parse_args()
 
     setup_logging()
-    run(source_filter=args.source)
+    run(source_filter=args.source, limit=args.limit)
 
 
 if __name__ == "__main__":

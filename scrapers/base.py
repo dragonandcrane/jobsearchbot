@@ -16,6 +16,11 @@ class JobListing:
     qualification: str = ""
     education_requirement: str = ""
     full_description: str = ""
+    # Detail page metadata
+    job_type: str = ""
+    remote: str = ""
+    department: str = ""
+    closing_date: str = ""
     # Contact info
     contact_name: str = ""
     contact_phone: str = ""
@@ -35,14 +40,17 @@ class BaseScraper(ABC):
         self.logger = logging.getLogger(f"scrapers.{self.name}")
 
     @abstractmethod
-    def scrape(self) -> list[JobListing]:
-        """Run the scraper and return a list of raw JobListings."""
+    def scrape(self, limit: int | None = None) -> list[JobListing]:
+        """Run the scraper and return a list of raw JobListings.
+
+        limit: stop early after collecting this many listings.
+        """
         ...
 
-    def safe_scrape(self) -> list[JobListing]:
+    def safe_scrape(self, limit: int | None = None) -> list[JobListing]:
         """Wrap scrape() with error handling so one scraper can't crash the run."""
         try:
-            results = self.scrape()
+            results = self.scrape(limit=limit)
             self.logger.info(f"{self.name}: found {len(results)} listings")
             return results
         except Exception:
