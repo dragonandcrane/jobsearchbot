@@ -178,3 +178,25 @@ def write_listing_file(listing: JobListing, force: bool = False) -> Path | None:
     except OSError as e:
         logger.warning(f"Failed to write listing file for {listing.full_url}: {e}")
         return None
+
+
+def delete_listing_file(url: str, job_site: str) -> bool:
+    """Delete the listing.md and its directory for a given URL.
+
+    Returns True if the file was deleted, False if it didn't exist or on error.
+    """
+    slug = url_to_slug(url)
+    if not slug:
+        return False
+    listing_dir = _LISTINGS_DIR / job_site / slug
+    listing_path = listing_dir / "listing.md"
+    if not listing_path.exists():
+        return False
+    try:
+        listing_path.unlink()
+        listing_dir.rmdir()  # only succeeds if dir is now empty
+        logger.info(f"Deleted {listing_path.relative_to(_LISTINGS_DIR.parent)}")
+        return True
+    except OSError as e:
+        logger.warning(f"Failed to delete listing file for {url}: {e}")
+        return False

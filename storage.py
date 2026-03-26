@@ -195,17 +195,24 @@ def backfill_missing_fields(
     fetch_fn: Callable[[str], dict[str, str]],
     job_site: str,
     delay: float = 0.5,
+    location_filter: frozenset[str] | None = None,
 ) -> int:
     """Fill empty detail fields for rows from `job_site`.
 
     Calls fetch_fn(url) -> dict for each row missing any of: location, remote,
-    job_type, department, closing_date.  Also rebuilds the listing.md file when
-    full_description is returned.  Returns the count of rows updated.
+    job_type, department, closing_date.
+
+    If location_filter is given, any row whose newly-resolved location fails the
+    filter is removed from the CSV and its listing.md is deleted immediately.
+    Rows that pass get their listing.md written/rebuilt right away.
+
+    Returns the count of rows updated (excluding deletions).
     """
-    from listing_files import write_listing_file  # avoid circular import at module level
+    from listing_files import delete_listing_file, write_listing_file  # avoid circular import
 
     rows = _load_csv()
     updated = 0
+    to_delete: list[str] = []
 
     for url, row in rows.items():
         if row.get("job_site", "") != job_site:
@@ -221,20 +228,28 @@ def backfill_missing_fields(
                 row[field] = fetched[field]
                 changed = True
 
-        if changed:
+        if not changed:
+            time.sleep(delay)
+            continue
+
+        location = row.get("location", "")
+        if location_filter and not _location_passes_state_filter(location, location_filter):
+            logger.info(f"  purge (location filter): {location!r} — {url}")
+            to_delete.append(url)
+            delete_listing_file(url, job_site)
+        else:
             updated += 1
             logger.info(
                 f"  backfill {url}: "
                 + ", ".join(f"{f}={row[f]!r}" for f in _BACKFILL_CSV_FIELDS if row.get(f))
             )
-            # Rebuild listing file with full detail data
             listing = JobListing(
                 job_site=row.get("job_site", ""),
                 full_url=url,
                 position=row.get("position", ""),
                 agency_department=row.get("agency_department", ""),
                 salary_range=row.get("salary_range", ""),
-                location=row.get("location", ""),
+                location=location,
                 remote=row.get("remote", ""),
                 job_type=row.get("job_type", ""),
                 department=row.get("department", ""),
@@ -249,9 +264,14 @@ def backfill_missing_fields(
 
         time.sleep(delay)
 
-    if updated:
+    for url in to_delete:
+        del rows[url]
+
+    if updated or to_delete:
         _save_csv(rows)
-    logger.info(f"Backfill complete: {updated} rows updated")
+    logger.info(
+        f"Backfill complete: {updated} updated, {len(to_delete)} purged"
+    )
     return updated
 
 

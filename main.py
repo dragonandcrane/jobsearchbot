@@ -13,11 +13,9 @@ Run one source: python main.py --source usajobs
 import argparse
 import logging
 import sys
-from pathlib import Path
 
 import config
 from scrapers import ALL_SCRAPERS
-from scrapers.base import JobListing
 from scrapers.governmentjobs import fetch_location_remote
 from processing.boilerplate import process_boilerplate
 from processing.keywords import process_keywords
@@ -66,8 +64,13 @@ def run(source_filter: str | None = None) -> None:
         logger.info("Extracting keywords...")
         all_listings = process_keywords(all_listings)
 
-        # Phase 3: Write per-listing detail files (idempotent)
-        written = sum(1 for l in all_listings if write_listing_file(l) is not None)
+        # Phase 3: Write per-listing detail files (idempotent).
+        # governmentjobs listings are skipped here — backfill writes them after
+        # fetching the detail page and applying the location filter.
+        written = sum(
+            1 for l in all_listings
+            if l.job_site != "governmentjobs.com" and write_listing_file(l) is not None
+        )
         logger.info(f"Listing files: {written} written")
 
         # Phase 4: Merge into CSV (dedup, update dates, preserve status)
@@ -79,11 +82,19 @@ def run(source_filter: str | None = None) -> None:
     else:
         logger.info("No new listings found")
 
-    # Phase 5: Backfill missing location/remote for governmentjobs rows
-    # Runs unconditionally so re-runs fill gaps even when scrape yields nothing new.
+    # Phase 5: Backfill detail fields for governmentjobs rows, apply location
+    # filter, and write listing.md files — all in one pass.
+    # Runs unconditionally so re-runs fill gaps even when scrape yields nothing.
     if not source_filter or source_filter == "governmentjobs":
-        logger.info("Backfilling missing location/remote fields...")
-        backfill_missing_fields(fetch_location_remote, "governmentjobs.com")
+        logger.info("Backfilling governmentjobs detail fields...")
+        location_filter = (
+            frozenset(s.upper() for s in config.LOCATION_FILTER_STATES)
+            if config.LOCATION_FILTER_STATES else None
+        )
+        backfill_missing_fields(
+            fetch_location_remote, "governmentjobs.com",
+            location_filter=location_filter,
+        )
 
     logger.info("=== Done ===")
 
