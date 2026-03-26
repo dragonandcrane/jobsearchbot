@@ -196,20 +196,27 @@ class GovernmentJobsScraper(BaseScraper):
         return listing
 
 
-def fetch_location_remote(url: str) -> tuple[str, str]:
-    """Fetch a governmentjobs.com detail page and return (location, remote).
+def fetch_location_remote(url: str) -> dict[str, str]:
+    """Fetch a governmentjobs.com detail page and return all metadata fields.
 
-    Returns empty strings on any error or if the fields are not found.
+    Returns a dict with keys: location, remote, job_type, department,
+    closing_date, full_description.  All values default to empty string.
     """
+    result: dict[str, str] = {
+        "location": "",
+        "remote": "",
+        "job_type": "",
+        "department": "",
+        "closing_date": "",
+        "full_description": "",
+    }
     try:
         resp = httpx.get(url, headers=HEADERS, timeout=30, follow_redirects=True)
         resp.raise_for_status()
     except httpx.HTTPError:
-        return "", ""
+        return result
 
     soup = BeautifulSoup(resp.text, "lxml")
-    location = ""
-    remote = ""
 
     for item in soup.select("div.job-detail-item"):
         label_el = item.select_one("span.job-detail-label")
@@ -218,12 +225,25 @@ def fetch_location_remote(url: str) -> tuple[str, str]:
             continue
         label = label_el.get_text(strip=True).lower()
         value = value_el.get_text(strip=True)
-        if "location" in label and not location:
-            location = value
-        elif "remote" in label and not remote:
-            remote = value
+        if "location" in label and not result["location"]:
+            result["location"] = value
+        elif "remote" in label and not result["remote"]:
+            result["remote"] = value
+        elif "job type" in label and not result["job_type"]:
+            result["job_type"] = value
+        elif "department" in label and not result["department"]:
+            result["department"] = value
+        elif ("closing" in label or "deadline" in label) and not result["closing_date"]:
+            result["closing_date"] = value
 
-    return location, remote
+    desc_el = soup.select_one(
+        "#TextContent, .description, .job-description, "
+        "[class*='description'], [class*='duties']"
+    )
+    if desc_el:
+        result["full_description"] = desc_el.get_text(separator="\n").strip()
+
+    return result
 
 
 if __name__ == "__main__":

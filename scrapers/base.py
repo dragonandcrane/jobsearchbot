@@ -16,6 +16,11 @@ class JobListing:
     qualification: str = ""
     education_requirement: str = ""
     full_description: str = ""
+    # Detail page metadata
+    job_type: str = ""
+    remote: str = ""
+    department: str = ""
+    closing_date: str = ""
     # Contact info
     contact_name: str = ""
     contact_phone: str = ""
