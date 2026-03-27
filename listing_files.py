@@ -44,6 +44,26 @@ def url_to_slug(url: str) -> str:
     return slug
 
 
+# Bare email: not already inside <, (, or [; lookahead includes \w to block TLD backtracking
+_BARE_EMAIL_RE = re.compile(
+    r'(?<![<(\[])([A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,})(?![>)\]\w])'
+)
+# Bare URL: not already inside <, (, or "; greedy \S+ then trailing punct stripped in callback
+_BARE_URL_RE = re.compile(r'(?<![<("(\["])(https?://\S+)')
+
+
+def _autolink(s: str) -> str:
+    """Wrap bare emails and URLs in angle brackets for markdownlint MD034."""
+    def _wrap_url(m: re.Match) -> str:
+        url = m.group(1)
+        stripped = url.rstrip(".,;:!?)")
+        return f"<{stripped}>{url[len(stripped):]}"
+
+    s = _BARE_EMAIL_RE.sub(r"<\1>", s)
+    s = _BARE_URL_RE.sub(_wrap_url, s)
+    return s
+
+
 def _format_description(text: str) -> str:
     """Apply heuristics to convert plain scraped text to markdown.
 
@@ -69,14 +89,19 @@ def _format_description(text: str) -> str:
                 result.append("")
             continue
 
+        # Already a markdown header — pass through unchanged
+        if s.startswith("#"):
+            result.append(_autolink(s))
+            continue
+
         # Normalise existing list markers
         if s.startswith(("- ", "* ", "• ", "· ")):
-            result.append(f"- {s[2:].strip()}")
+            result.append(f"- {_autolink(s[2:].strip())}")
             continue
 
         # Numbered list: "1. foo" or "1) foo"
         if re.match(r"^\d+[.)]\s+\S", s):
-            result.append(f"- {re.sub(r'^\d+[.)]\s+', '', s)}")
+            result.append("- " + _autolink(re.sub(r"^\d+[.)]\s+", "", s)))
             continue
 
         # ALL-CAPS header
@@ -90,9 +115,34 @@ def _format_description(text: str) -> str:
             result.append(f"\n### {s.rstrip(':')}\n")
             continue
 
-        result.append(s)
+        result.append(_autolink(s))
 
     return "\n".join(result).strip()
+
+
+def _lint_fix(text: str) -> str:
+    """Fix trivial markdownlint issues in generated markdown.
+
+    - MD012: collapse 3+ consecutive blank lines to one
+    - MD001: heading levels must only increment by one at a time
+    """
+    # MD012: no multiple consecutive blank lines
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    # MD001: heading levels increment at most by one
+    lines = text.splitlines()
+    result: list[str] = []
+    current_level = 0
+    for line in lines:
+        m = re.match(r"^(#{1,6})(\s+.*)$", line)
+        if m:
+            raw_level = len(m.group(1))
+            if current_level > 0 and raw_level > current_level + 1:
+                raw_level = current_level + 1
+                line = "#" * raw_level + m.group(2)
+            current_level = raw_level
+        result.append(line)
+    return "\n".join(result)
 
 
 def _build_markdown(listing: JobListing) -> str:
@@ -116,13 +166,14 @@ def _build_markdown(listing: JobListing) -> str:
         ("Phone", listing.contact_phone),
         ("Email", listing.contact_email),
     ]
-    filled = [(k, v) for k, v in table_rows if v]
+    filled = [(k, re.sub(r"\s*\|\s*", " - ", v)) for k, v in table_rows if v]
     if filled:
-        key_width = max(len(k) for k, _ in filled)
-        lines.append(f"| {'Field':<{key_width}} | Value |")
-        lines.append(f"|{'-' * (key_width + 2)}|-------|")
+        key_width = max(len("Field"), max(len(k) for k, _ in filled))
+        val_width = max(len("Value"), max(len(v) for _, v in filled))
+        lines.append(f"| {'Field':<{key_width}} | {'Value':<{val_width}} |")
+        lines.append(f"|{'-' * (key_width + 2)}|{'-' * (val_width + 2)}|")
         for k, v in filled:
-            lines.append(f"| {k:<{key_width}} | {v} |")
+            lines.append(f"| {k:<{key_width}} | {v:<{val_width}} |")
         lines.append("")
 
     lines.append("---")
@@ -146,7 +197,7 @@ def _build_markdown(listing: JobListing) -> str:
         lines.append("")
         lines.append(_format_description(listing.org_boilerplate))
 
-    return "\n".join(lines).strip() + "\n"
+    return _lint_fix("\n".join(lines).strip()) + "\n"
 
 
 def listing_has_description(url: str, job_site: str) -> bool:

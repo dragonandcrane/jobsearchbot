@@ -37,7 +37,7 @@ def setup_logging() -> None:
     )
 
 
-def run(source_filter: str | None = None, limit: int | None = None) -> None:
+def run(source_filter: str | None = None, limit: int | None = None, regen: bool = False) -> None:
     logger = logging.getLogger("main")
     logger.info("=== Job Search Bot starting ===")
 
@@ -89,7 +89,7 @@ def run(source_filter: str | None = None, limit: int | None = None) -> None:
     # Runs unconditionally so re-runs fill gaps even when scrape yields nothing new.
     if not source_filter or source_filter == "governmentjobs":
         logger.info("Backfilling missing location/remote fields...")
-        backfill_missing_fields(fetch_location_remote, "governmentjobs.com", limit=limit)
+        backfill_missing_fields(fetch_location_remote, "governmentjobs.com", limit=limit, regen=regen)
 
     logger.info("=== Done ===")
 
@@ -107,10 +107,15 @@ def main() -> None:
         metavar="N",
         help="Process at most N listings (for rapid iteration)",
     )
+    parser.add_argument(
+        "--regen",
+        action="store_true",
+        help="Force regeneration of all listing files (re-fetches and rewrites even if file exists)",
+    )
     args = parser.parse_args()
 
     setup_logging()
-    run(source_filter=args.source, limit=args.limit)
+    run(source_filter=args.source, limit=args.limit, regen=args.regen)
 
 
 if __name__ == "__main__":

@@ -212,6 +212,7 @@ def backfill_missing_fields(
     job_site: str,
     delay: float = 0.5,
     limit: int | None = None,
+    regen: bool = False,
 ) -> int:
     """Fill empty detail fields for rows from `job_site`.
 
@@ -234,7 +235,7 @@ def backfill_missing_fields(
             continue
 
         csv_complete = all(row.get(f, "").strip() for f in _BACKFILL_CSV_FIELDS)
-        file_has_desc = listing_has_description(url, job_site)
+        file_has_desc = (not regen) and listing_has_description(url, job_site)
         if csv_complete and file_has_desc:
             continue  # nothing to do
 

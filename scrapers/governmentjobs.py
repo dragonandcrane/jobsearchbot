@@ -16,6 +16,60 @@ _US_STATE_ABBREVS = frozenset({
 })
 
 BASE_URL = "https://www.governmentjobs.com/careers/home/index"
+
+_HEADING_TAGS = {"h1": "#", "h2": "##", "h3": "###", "h4": "####", "h5": "#####", "h6": "######"}
+_BLOCK_TAGS = {"div", "section", "article", "aside", "main", "header", "footer", "p",
+               "table", "tbody", "thead", "tr", "td", "th", "form", "fieldset"}
+
+
+def _walk(node, parts: list[str]) -> None:
+    """Recursive helper: converts a BS4 node tree to markdown-friendly text lines."""
+    if getattr(node, "name", None) is None:
+        # NavigableString or non-tag node
+        text = str(node)
+        if text.strip():
+            parts.append(text.strip())
+        return
+    tag = node.name
+    if tag in ("script", "style", "noscript"):
+        return
+    if tag == "li":
+        text = node.get_text(separator=" ").strip()
+        if text:
+            parts.append(f"- {text}")
+        return  # don't recurse into li; already captured all text
+    if tag in _HEADING_TAGS:
+        text = node.get_text(separator=" ").strip()
+        if text:
+            if parts and parts[-1] != "":
+                parts.append("")
+            parts.append(f"{_HEADING_TAGS[tag]} {text}")
+            parts.append("")
+        return
+    if tag in _BLOCK_TAGS:
+        if parts and parts[-1] != "":
+            parts.append("")
+        for child in node.children:
+            _walk(child, parts)
+        if parts and parts[-1] != "":
+            parts.append("")
+        return
+    if tag == "br":
+        if parts and parts[-1] != "":
+            parts.append("")
+        return
+    for child in node.children:
+        _walk(child, parts)
+
+
+def _html_to_markdown(el) -> str:
+    """Convert a BS4 element to plain text, preserving headings and list structure."""
+    import re as _re
+    parts: list[str] = []
+    _walk(el, parts)
+    text = "\n".join(parts)
+    text = _re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
 SEARCH_URL = "https://www.governmentjobs.com/jobs"
 DELAY_SECONDS = 1.5
 
@@ -272,7 +326,7 @@ def fetch_location_remote(url: str) -> dict[str, str]:
         # Fallback for older page layouts
         desc_el = soup.select_one(".tab-pane.active, #TextContent")
     if desc_el:
-        result["full_description"] = desc_el.get_text(separator="\n").strip()
+        result["full_description"] = _html_to_markdown(desc_el)
 
     return result
 
