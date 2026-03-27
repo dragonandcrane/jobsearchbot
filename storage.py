@@ -30,6 +30,7 @@ CSV_COLUMNS = [
     "job_site",
     "full_url",
     "location",
+    "state",
     "remote",
     "job_type",
     "department",
@@ -51,6 +52,17 @@ CSV_COLUMNS = [
     "last_scraped_date",
     "last_modified_date",
 ]
+
+
+def _infer_state(location: str) -> str:
+    """Extract 2-letter US state abbreviation from a location string, or ''."""
+    if not location:
+        return ""
+    for part in location.split(","):
+        word = part.strip().split()[0].upper().rstrip(".,;") if part.strip() else ""
+        if word in _US_STATE_ABBREVS:
+            return word
+    return ""
 
 
 def _ensure_csv_exists() -> None:
@@ -82,6 +94,9 @@ def _load_csv() -> OrderedDict[str, dict]:
 
 def _save_csv(rows: OrderedDict[str, dict]) -> None:
     """Write all rows back to the CSV."""
+    for row in rows.values():
+        if not row.get("state") and row.get("location"):
+            row["state"] = _infer_state(row["location"])
     try:
         with open(config.CSV_PATH, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS, extrasaction="ignore")
@@ -99,6 +114,7 @@ def _listing_to_dict(listing: JobListing) -> dict:
         "job_site": listing.job_site,
         "full_url": listing.full_url,
         "location": listing.location,
+        "state": _infer_state(listing.location),
         "remote": listing.remote,
         "job_type": listing.job_type,
         "department": listing.department,
