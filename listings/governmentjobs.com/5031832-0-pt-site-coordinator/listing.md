@@ -1,51 +1,44 @@
 # [PT SITE COORDINATOR](https://www.governmentjobs.com/jobs/5031832-0/pt-site-coordinator)
 
-| Field    | Value |
-|----------|-------|
-| Employer | Celina, City of (TX) |
-| Salary   | Part-Time  | $17.90 Hourly |
-| Location | Celina |
+| Field    | Value                     |
+|----------|---------------------------|
+| Employer | Celina, City of (TX)      |
+| Salary   | Part-Time - $17.90 Hourly |
+| Location | Celina                    |
 
 ---
 
-Summary
+## Summary
 
 The Celina Way
+
 It is an exciting time to work for the City of Celina! Did you know Celina has been ranked as the one of the fastest growing cities in North Texas? We are growing and looking for dedicated and collaborative people to join our team of talented and valued employees. High-performing organizations have a set of principles and core values that are used to implement their goals and objectives. Those values represent what we are deeply passionate about and guide the decisions of the individual employees and the organization. At the City of Celina, we demonstrate our high performance by modeling the Values of
 Excellence, Community, Integrity
 and
 Service
 and it is expected of all we employ.
+
 What You Will Be Doing
+
 Our professionals are the most important resource in our service commitment to our customers. We nurture a progressive environment where challenging, empowered, and purposeful work is celebrated.
+
 As the
 PT Site Coordinator,
 you will serve as the front-line resource to patrons of City of Celina Parks and Recreation facilities, with an emphasis on sport league practices and games. Supervise use of each facility so that field-use schedules are followed appropriately.
+
 For the complete
 PT Site Coordinator
 job description, please click
 here.
 
 What You Bring To Us
-High School diploma or GED
-Active certification for CPR/AED/First-Aid or ability to acquire within 6 months
-You
-anticipate
-employee needs and
-relentlessly pursue solutions.
-You take
-pride in your work.
-It's your community!
-You
-own
-the experience and make each moment
-memorable.
-You
-maintain
-a high level of
-discretion, independent judgment
-, and
-initiative.
+
+- High School diploma or GED
+- Active certification for CPR/AED/First-Aid or ability to acquire within 6 months
+- You  anticipate  employee needs and  relentlessly pursue solutions.
+- You take  pride in your work.  It's your community!
+- You  own  the experience and make each moment  memorable.
+- You  maintain  a high level of  discretion, independent judgment , and  initiative.
 
 EEOC Statement
 
