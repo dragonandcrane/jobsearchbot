@@ -6,6 +6,7 @@ accessible but may change without notice. Failures are logged but
 won't block other scrapers.
 """
 
+import re
 import time
 import httpx
 from bs4 import BeautifulSoup
@@ -15,6 +16,7 @@ from scrapers.base import BaseScraper, JobListing
 
 # LinkedIn guest jobs API - returns HTML fragments, no auth needed
 SEARCH_URL = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
+DETAIL_URL = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{job_id}"
 DELAY_SECONDS = 3
 
 HEADERS = {
@@ -157,6 +159,93 @@ class LinkedInScraper(BaseScraper):
             position=title,
             salary_range=salary,
         )
+
+
+def fetch_single_listing(url: str) -> JobListing | None:
+    """Fetch a single LinkedIn job posting by URL.
+
+    Parses the unauthenticated guest job detail API. Returns None on failure.
+    """
+    import logging
+    log = logging.getLogger("scrapers.linkedin")
+
+    # Extract numeric job ID from URL (e.g. /jobs/view/4395174358/)
+    m = re.search(r"/jobs/view/(\d+)", url)
+    if not m:
+        log.warning(f"Cannot extract job ID from URL: {url}")
+        return None
+    job_id = m.group(1)
+
+    clean_url = f"https://www.linkedin.com/jobs/view/{job_id}/"
+    detail_url = DETAIL_URL.format(job_id=job_id)
+
+    try:
+        resp = httpx.get(detail_url, headers=HEADERS, timeout=30, follow_redirects=True)
+        if resp.status_code != 200:
+            log.warning(f"LinkedIn detail API returned {resp.status_code} for {detail_url}")
+            return None
+    except httpx.HTTPError as e:
+        log.warning(f"LinkedIn detail request failed: {e}")
+        return None
+
+    soup = BeautifulSoup(resp.text, "lxml")
+
+    title_el = soup.select_one(
+        "h2.top-card-layout__title, h1.top-card-layout__title, "
+        ".topcard__title, h2[class*='title']"
+    )
+    title = title_el.get_text(strip=True) if title_el else ""
+
+    company_el = soup.select_one(
+        "a.topcard__org-name-link, .topcard__org-name-link, "
+        ".top-card-layout__company, a[class*='company']"
+    )
+    company = company_el.get_text(strip=True) if company_el else ""
+
+    location_el = soup.select_one(
+        ".topcard__flavor--bullet, .top-card-layout__bullet, "
+        "[class*='location']"
+    )
+    location = location_el.get_text(strip=True) if location_el else ""
+
+    salary_el = soup.select_one("[class*='salary'], [class*='compensation']")
+    salary = salary_el.get_text(strip=True) if salary_el else ""
+
+    # Full description
+    desc_el = soup.select_one(
+        ".description__text, .show-more-less-html__markup, "
+        "[class*='description']"
+    )
+    description = desc_el.get_text(separator="\n").strip() if desc_el else ""
+
+    # Criteria (job type, seniority, etc.)
+    criteria_items = soup.select(
+        ".description__job-criteria-item, [class*='criteria-item']"
+    )
+    job_type = ""
+    for item in criteria_items:
+        label_el = item.select_one(
+            ".description__job-criteria-subheader, [class*='criteria-subheader']"
+        )
+        value_el = item.select_one(
+            ".description__job-criteria-text, [class*='criteria-text']"
+        )
+        if label_el and value_el:
+            label = label_el.get_text(strip=True).lower()
+            value = value_el.get_text(strip=True)
+            if "employment type" in label:
+                job_type = value
+
+    return JobListing(
+        job_site="linkedin.com",
+        full_url=clean_url,
+        position=title,
+        agency_department=company,
+        location=location,
+        salary_range=salary,
+        job_type=job_type,
+        full_description=description,
+    )
 
 
 if __name__ == "__main__":

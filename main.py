@@ -21,7 +21,7 @@ from scrapers.base import JobListing
 from scrapers.governmentjobs import fetch_location_remote
 from processing.boilerplate import process_boilerplate
 from processing.keywords import process_keywords
-from listing_files import write_listing_file
+from listing_files import write_listing_file, write_resume_file
 from storage import backfill_missing_fields, merge_listings
 
 
@@ -35,6 +35,60 @@ def setup_logging() -> None:
             logging.FileHandler(config.LOG_PATH),
         ],
     )
+
+
+def run_single_url(url: str, regen: bool = False) -> None:
+    """Fetch, process, and write listing.md + resume.md for a single job URL."""
+    from urllib.parse import urlparse
+    logger = logging.getLogger("main")
+
+    hostname = urlparse(url).netloc.removeprefix("www.")
+    logger.info(f"Single-URL mode: {url} ({hostname})")
+
+    listing = None
+
+    if "governmentjobs.com" in hostname:
+        fields = fetch_location_remote(url)
+        listing = JobListing(
+            job_site="governmentjobs.com",
+            full_url=url,
+            location=fields.get("location", ""),
+            remote=fields.get("remote", ""),
+            job_type=fields.get("job_type", ""),
+            department=fields.get("department", ""),
+            closing_date=fields.get("closing_date", ""),
+            full_description=fields.get("full_description", ""),
+        )
+    elif "linkedin.com" in hostname:
+        from scrapers.linkedin import fetch_single_listing
+        listing = fetch_single_listing(url)
+    else:
+        logger.error(f"No single-URL fetcher available for {hostname}")
+        return
+
+    if not listing:
+        logger.error(f"Failed to fetch listing for {url}")
+        return
+
+    listings = [listing]
+    listings = process_boilerplate(listings)
+    listings = process_keywords(listings)
+    listing = listings[0]
+
+    listing_path = write_listing_file(listing, force=regen)
+    if listing_path:
+        logger.info(f"Wrote listing.md: {listing_path}")
+    else:
+        logger.info("listing.md already exists (use --regen to overwrite)")
+
+    resume_path = write_resume_file(listing, force=regen)
+    if resume_path:
+        logger.info(f"Wrote resume.md: {resume_path}")
+    else:
+        logger.info("resume.md already exists (use --regen to overwrite)")
+
+    new_count, updated_count = merge_listings([listing])
+    logger.info(f"CSV: {new_count} new, {updated_count} updated")
 
 
 def run(source_filter: str | None = None, limit: int | None = None, regen: bool = False) -> None:
@@ -112,10 +166,18 @@ def main() -> None:
         action="store_true",
         help="Force regeneration of all listing files (re-fetches and rewrites even if file exists)",
     )
+    parser.add_argument(
+        "--url",
+        metavar="URL",
+        help="Fetch, process, and write listing.md + resume.md for a single job URL",
+    )
     args = parser.parse_args()
 
     setup_logging()
-    run(source_filter=args.source, limit=args.limit, regen=args.regen)
+    if args.url:
+        run_single_url(args.url, regen=args.regen)
+    else:
+        run(source_filter=args.source, limit=args.limit, regen=args.regen)
 
 
 if __name__ == "__main__":

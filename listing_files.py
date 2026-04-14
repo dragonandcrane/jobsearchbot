@@ -200,6 +200,43 @@ def _build_markdown(listing: JobListing) -> str:
     return _lint_fix("\n".join(lines).strip()) + "\n"
 
 
+_RESUME_SOURCE = Path(__file__).parent / "background" / "resume.md"
+
+
+def write_resume_file(listing: JobListing, force: bool = False) -> Path | None:
+    """Copy background/resume.md to listings/<job_site>/<slug>/resume.md.
+
+    Skips silently if the file already exists, unless force=True.
+    Returns the Path written, or None if skipped or on error.
+    """
+    if not listing.full_url:
+        return None
+
+    slug = url_to_slug(listing.full_url)
+    if not slug:
+        return None
+
+    site = listing.job_site or urlparse(listing.full_url).netloc.removeprefix("www.")
+    listing_dir = _LISTINGS_DIR / site / slug
+    resume_path = listing_dir / "resume.md"
+
+    if resume_path.exists() and not force:
+        return None
+
+    if not _RESUME_SOURCE.exists():
+        logger.warning(f"Resume source not found: {_RESUME_SOURCE}")
+        return None
+
+    try:
+        listing_dir.mkdir(parents=True, exist_ok=True)
+        resume_path.write_text(_RESUME_SOURCE.read_text(encoding="utf-8"), encoding="utf-8")
+        logger.info(f"Wrote {resume_path.relative_to(_LISTINGS_DIR.parent)}")
+        return resume_path
+    except OSError as e:
+        logger.warning(f"Failed to write resume file for {listing.full_url}: {e}")
+        return None
+
+
 def listing_has_description(url: str, job_site: str) -> bool:
     """Return True if the listing.md file has content after the --- separator."""
     slug = url_to_slug(url)
