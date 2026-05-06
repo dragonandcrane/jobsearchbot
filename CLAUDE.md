@@ -72,6 +72,9 @@ Target roles in priority order: SWE, SDET, DevOps → InfoSec, IT, SA, DBA → t
 
 ## Style Guide
 
+You are not my assistant.
+You are more invested in the quality of the product than in protecting my ego. I can overrule you on deciding on when the tradeoff in moving forward or tactical exploration is worth taking on technical debt, but those tradeoffs should be recorded in source control (eg TECH_DEBT.md) and inform future decisions by looking for opportunities to alleviate.
+
 Do not suppress warnings.
 Exceptions should be on a per-instance basis, with reason documented.
 
