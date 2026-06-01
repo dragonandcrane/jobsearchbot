@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>David Chung — Teaching Resume</title>
+<style>
+  /* ------------------------------------------------------------------
+     Edit colors / fonts here. The whole document follows these tokens.
+     ------------------------------------------------------------------ */
+  :root {
+    --ink:        #2b2622;   /* body text — warm near-black */
+    --ink-soft:   #574c44;   /* dates, locations, supporting text */
+    --rule:       #d8cfc4;   /* hairline section dividers */
+    --accent:     #6b4a2b;   /* muted bronze — name, section headings */
+    --paper:      #fbf9f5;   /* warm off-white */
+    --serif-display: "Cormorant Garamond", "EB Garamond", Garamond, Georgia, serif;
+    --serif-body:    "EB Garamond", Garamond, Georgia, "Times New Roman", serif;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif-body);
+    font-size: 11.5pt;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 7.0in;
+    margin: 0.75in auto;
+    padding: 0 0.25in;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    text-align: center;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-family: var(--serif-display);
+    font-weight: 500;
+    font-size: 34pt;
+    letter-spacing: 0.18em;
+    margin: 0 0 0.35rem;
+    color: var(--accent);
+  }
+  .contact {
+    font-size: 10.5pt;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+  .contact a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dotted var(--rule);
+  }
+  .contact .sep {
+    margin: 0 0.5em;
+    color: var(--rule);
+  }
+
+  /* ---------- Sections ---------- */
+  section {
+    margin-top: 1.6rem;
+  }
+  h2 {
+    font-family: var(--serif-display);
+    font-weight: 600;
+    font-size: 12pt;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: center;
+    margin: 0 0 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .summary {
+    text-align: center;
+    font-style: italic;
+    font-size: 12pt;
+    color: var(--ink-soft);
+    margin: 0 1rem;
+  }
+
+  /* ---------- Experience entries ---------- */
+  .role {
+    margin-bottom: 1.1rem;
+    page-break-inside: avoid;
+  }
+  .role-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.15rem;
+  }
+  .role-title {
+    font-weight: 600;
+    font-size: 12pt;
+  }
+  .role-title .company {
+    color: var(--ink);
+  }
+  .role-title .position {
+    color: var(--ink-soft);
+    font-weight: 500;
+    font-style: italic;
+  }
+  .role-meta {
+    font-size: 10.5pt;
+    color: var(--ink-soft);
+    font-variant-numeric: oldstyle-nums;
+    white-space: nowrap;
+  }
+  .role-context {
+    font-size: 10.5pt;
+    color: var(--ink-soft);
+    font-style: italic;
+    margin-bottom: 0.35rem;
+  }
+  .role-body p {
+    margin: 0.3rem 0;
+  }
+
+  /* ---------- Education / credentials ---------- */
+  .creds {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .creds li {
+    margin-bottom: 0.55rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: baseline;
+  }
+  .creds .what { color: var(--ink); }
+  .creds .what strong { font-weight: 600; }
+  .creds .what em   { color: var(--ink-soft); font-style: italic; }
+  .creds .when {
+    color: var(--ink-soft);
+    font-size: 10.5pt;
+    white-space: nowrap;
+    font-variant-numeric: oldstyle-nums;
+  }
+
+  /* ---------- Languages ---------- */
+  .languages {
+    text-align: center;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .languages strong {
+    color: var(--ink);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  /* ---------- Print / PDF export ---------- */
+  @page {
+    size: letter;
+    margin: 0.6in 0.75in;
+  }
+  @media print {
+    html, body { background: white; }
+    .page { margin: 0; max-width: none; padding: 0; }
+    a { border-bottom: none; }
+    /* Subtle accent stays in print if "Background graphics" is checked
+       in the browser print dialog; otherwise it falls back to dark ink. */
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <h1>DAVID&nbsp;CHUNG</h1>
+    <div class="contact">
+      <a href="mailto:david.h.chung@gmail.com">david.h.chung@gmail.com</a>
+      <span class="sep">•</span>
+      (747) 333-6050
+      <span class="sep">•</span>
+      <a href="https://linkedin.com/in/david-chung">linkedin.com/in/david-chung</a>
+      <span class="sep">•</span>
+      Los Angeles, CA
+    </div>
+  </header>
+
+  <section>
+    <h2>Summary</h2>
+    <p class="summary">
+      Software engineer turned business owner and karate sensei
+      seeking a K&#8211;12 teaching position.
+    </p>
+  </section>
+
+  <section>
+    <h2>Experience</h2>
+
+    <div class="role">
+      <div class="role-head">
+        <div class="role-title">
+          <span class="company">Dragon and Crane Dojo</span>
+          &nbsp;—&nbsp;
+          <span class="position">Founder/CEO &amp; Sensei</span>
+        </div>
+        <div class="role-meta">Los Angeles, CA &middot; 2021&#8211;Present</div>
+      </div>
+      <div class="role-body">
+        <p>Founded and operate a martial arts school, managing all instruction,
+           business operations, and student development as a sole proprietor.</p>
+        <p>Develop off-the-mat curriculum for reading, chess, coding, public
+           speaking, graphic design, Japanese, and physics — including
+           self-published booklets and embroidered achievement badges.</p>
+      </div>
+    </div>
+
+    <div class="role">
+      <div class="role-head">
+        <div class="role-title">
+          <span class="company">Deep6 AI</span>
+          &nbsp;—&nbsp;
+          <span class="position">Platform Engineer</span>
+        </div>
+        <div class="role-meta">Pasadena, CA &middot; 2018&#8211;2022</div>
+      </div>
+      <div class="role-context">Seed-stage clinical AI startup</div>
+      <div class="role-body">
+        <p>Built and maintained platform infrastructure enabling the company to scale
+           from proof-of-concept to a funded, multi-customer product — including
+           staff onboarding IT automation, user training and support for customer
+           success, and information security and compliance analysis.</p>
+      </div>
+    </div>
+
+    <div class="role">
+      <div class="role-head">
+        <div class="role-title">
+          <span class="company">Aporeto</span>
+          &nbsp;—&nbsp;
+          <span class="position">Site Reliability Engineer</span>
+        </div>
+        <div class="role-meta">San Francisco, CA &middot; 2017&#8211;2018</div>
+      </div>
+      <div class="role-context">Series A network security startup</div>
+      <div class="role-body">
+        <p>Extended CI/CD infrastructure to support the company's first
+           on-premises enterprise deployments.</p>
+      </div>
+    </div>
+
+    <div class="role">
+      <div class="role-head">
+        <div class="role-title">
+          <span class="company">Apple Inc.</span>
+          &nbsp;—&nbsp;
+          <span class="position">Senior Software Engineer</span>
+        </div>
+        <div class="role-meta">San Jose, CA &middot; 2015&#8211;2017</div>
+      </div>
+      <div class="role-context">Network Management</div>
+      <div class="role-body">
+        <p>Designed network management APIs and established DevOps practices and
+           disaster recovery protocols for Apple's internal NOC infrastructure.</p>
+      </div>
+    </div>
+
+    <div class="role">
+      <div class="role-head">
+        <div class="role-title">
+          <span class="company">Chungdahm Learning</span>
+          &nbsp;—&nbsp;
+          <span class="position">Project Manager / Business Developer</span>
+        </div>
+        <div class="role-meta">Seoul, South Korea &middot; 2014&#8211;2015</div>
+      </div>
+      <div class="role-context">EdTech</div>
+      <div class="role-body">
+        <p>Led cross-functional delivery of interactive ESL tablet textbooks
+           and drove international business development.</p>
+      </div>
+    </div>
+
+    <div class="role">
+      <div class="role-head">
+        <div class="role-title">
+          <span class="company">Cisco Systems</span>
+          &nbsp;—&nbsp;
+          <span class="position">Release Engineer</span>
+        </div>
+        <div class="role-meta">San Jose, CA &middot; 2011&#8211;2013</div>
+      </div>
+      <div class="role-context">Cloud / Network Management — Cisco Prime Infrastructure</div>
+      <div class="role-body">
+        <p>Led release engineering on a large-scale network management platform,
+           driving CI/CD modernization across a 40-developer, multi-team
+           organization, including documentation publishing and public speaking
+           engagements.</p>
+      </div>
+    </div>
+
+    <div class="role">
+      <div class="role-head">
+        <div class="role-title">
+          <span class="company">Goldman Sachs</span>
+          &nbsp;—&nbsp;
+          <span class="position">Vice President</span>
+        </div>
+        <div class="role-meta">London, UK &middot; 2001&#8211;2009</div>
+      </div>
+      <div class="role-context">Treasury IT</div>
+      <div class="role-body">
+        <p>Advanced from developer to VP over 8 years, building and managing
+           mission-critical distributed payment and settlement systems across
+           global operations.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section>
+    <h2>Education &amp; Credentials</h2>
+    <ul class="creds">
+      <li>
+        <span class="what"><strong>Brown University</strong> — BSc, Mathematics &amp; Computer Science</span>
+        <span class="when">2001</span>
+      </li>
+      <li>
+        <span class="what"><strong>Project Management Institute</strong> — Project Management Professional (PMP)</span>
+        <span class="when">2013</span>
+      </li>
+      <li>
+        <span class="what"><strong>Toastmasters International</strong> — Competent Communicator; Advanced Leadership Silver; <em>PR Officer, District 93 Korea</em></span>
+        <span class="when">2014</span>
+      </li>
+      <li>
+        <span class="what"><strong>Cisco Systems</strong> — ICND1</span>
+        <span class="when">2016</span>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Languages</h2>
+    <p class="languages">
+      <strong>Korean</strong> &middot; Intermediate
+      &nbsp;&nbsp;·&nbsp;&nbsp;
+      <strong>Spanish</strong> &middot; Intermediate
+    </p>
+  </section>
+
+</main>
+</body>
+</html>
