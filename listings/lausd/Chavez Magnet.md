@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD041 -->
-June 1, 2026
+June 5, 2026
 
 Anne Maschler, Principal\
 Cesar Chavez LA Arts Magnet (LAUSD)\
@@ -11,11 +11,11 @@ Cesar Chavez LA Arts Magnet (LAUSD)\
 
 Dear Principal Maschler,
 
-I am applying for the math teaching position at Cesar Chavez LA Arts Magnet for the 2026-2027 school year. I bring a BSc in Mathematics and Computer Science from Brown University, 20 years as a software engineer, and five years as founder and sensei at Dragon and Crane Dojo, a traditional karate studio I built from the ground up.
+I am applying for the math teaching position at Cesar Chavez LA Arts Magnet for the 2026-2027 school year. Teaching has been a throughline of my life going as far back as high school, and I am eager to culminate its integration into my professional career.
 
-A throughline of my career has been novel curriculum development: working in Seoul Korea designing language lesson textbooks at an ed-tech Hagwon, as president of a Toastmasters club, developing new workshop formats for ESL speakers to overcome their hesitance to give their first speech, and most recently as a karate sensei developing an off-the-mat curriculum relating movement to such diverse fields as linguistics, geometry, pedagogy, and chess. For example, I relate the circular and linear trajectory of kicks to Euclid's treatment of lines and circles as fundamental objects of geometry, and show that a kick angled 30 degrees above horizontal rises half a leg-length above belt height. At the same time, my experience as both sensei and coder has taught me an appreciation of the simple fundamentals of clear communication and patient, structured repetition in helping a learner reach their goals.
+As a black belt karate instructor in high school, teaching students spanning ages from 6 to 60 gave me a keen appreciation for the distinction between the roles of knowledge transfer and mental/emotional development in education. This sensitivity served me in college when I tutored friends and taught formally as a TA, and during my 20 years as a software engineer often presented to colleagues on new technologies and workflows. These strands of education coalesced while living in Korea, where I worked at an edtech Hagwon as a project manager publishing multimedia ESL textbooks and founded a Toastmasters club, developing a novel education program for ESL speakers to overcome their hesitancy to speak. Finally, over the past 5 years I brought these disparate strands together into a coherent whole when I founded a karate dojo where I have been developing from the ground up an off-the-mat curriculum relating karate to such diverse disciplines as etymology, geometry, pedagogy, and chess. For example, I relate the circular and linear trajectory of kicks to Euclid's treatment of lines and circles as fundamental objects of geometry, and show that a kick angled 30 degrees above horizontal rises half a leg-length above belt height - without mentioning the words sine or hypotenuse.
 
-I am excited for the opportunity to further discuss my unique blend of innovation and fundamentals to bring to the Cesar Chavez LA Arts Magnet, even as what I learn in the classroom of what students struggle with and relate to can inform my parallel teaching at the dojo. Thank you for your time and consideration.
+I am excited for the opportunity to further discuss how I can adapt my experience and skills to meet the demands of the math classroom in order to best serve the needs of the students and the broader community.
 
 Sincerely,
 
