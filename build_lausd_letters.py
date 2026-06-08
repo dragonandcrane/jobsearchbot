@@ -40,6 +40,19 @@ RAW_CSV = Path("listings/lausd/raw.csv")
 TEMPLATE_PATH = Path("background/teaching-cover-template.md")
 OUTPUT_BASE = Path("listings/lausd")
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+MD_TO_PDF = SCRIPT_DIR / "md_to_pdf.py"
+
+
+def find_python() -> str:
+    """Prefer the project venv's python so md_to_pdf.py can import markdown
+    even when this script is invoked with the user's global python."""
+    for rel in (".venv/Scripts/python.exe", ".venv/bin/python"):
+        candidate = SCRIPT_DIR / rel
+        if candidate.exists():
+            return str(candidate)
+    return sys.executable
+
 # LAUSD shorthand we want to keep uppercase after title-casing. Word-bounded,
 # case-insensitive.
 ABBREVS = {
@@ -177,7 +190,11 @@ def main() -> int:
         if not short:
             skipped_no_short.append(f"{row['school_name']} / {row['subject']}")
             continue
-        path = output_dir_for(row) / f"{short}.md"
+        # Filename: "David Chung - <subject> - <short>.md". The subject in the
+        # filename is the --subject flag value if given (so grouped output gets
+        # consistent filenames), otherwise the row's exact subject value.
+        fname_subject = args.subject.strip() if args.subject else row["subject"].strip()
+        path = output_dir_for(row) / f"David Chung - {fname_subject} - {short}.md"
         if path in seen:
             collisions.append((path, row["school_name"], row["subject"]))
             continue
@@ -201,7 +218,7 @@ def main() -> int:
         return 0
 
     result = subprocess.run(
-        [sys.executable, "md_to_pdf.py", *map(str, written)],
+        [find_python(), str(MD_TO_PDF), *map(str, written)],
         check=False,
     )
     return result.returncode
